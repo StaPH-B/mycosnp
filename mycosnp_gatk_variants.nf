@@ -48,11 +48,12 @@ process gatk_HC{
     
 
     output:
-    file("${name}_gatkHC.g.vcf*") into gvcfs
+    tuple name, file("${name}_gatkHC.g.vcf") into gvcfs
+    tuple name, file("${name}_gatkHC.g.vcf.idx") into gvcf_idx
   
     shell:
     """
-    gatk HaplotypeCaller -R ${reference[1]} -I ${bams} --sample-ploidy 2 --emit-ref-confidence NONE --native-pair-hmm-threads 4 \
+    gatk HaplotypeCaller -R ${reference[1]} -I ${bams} --sample-ploidy 2 --emit-ref-confidence GVCF --native-pair-hmm-threads 4 \
     -O ${name}_gatkHC.g.vcf
     """
 }
@@ -61,27 +62,28 @@ process gatk_HC{
 
 process gatk_CB{
     publishDir "/home/ldotrang/C_auris_testing/nfBWAref/gatk_output/gvcf_combined", mode: 'copy'
-    tag "$name"
 
     input:
     file reference from reference_fasta2.collect()
-    tuple name, file (gvcf) from gvcfs.collect().view()
+    file (gvcf) from gvcfs.collect().view()
 
     output:
-   // file("*.g.vcf") into combined_gvcfs
-    file("*.txt") into gvcf_list
-    shell:
-    """
-    for j in ${gvcfs};do echo j >> input_files.txt
+    file("*.g.vcf") into combined_gvcfs
+  
 
+    script:
+    //vcfs = gvcf.join(' --variant ') this did not end up working 
     
+    """
+    for file in ${gvcf}; do
+            if [ \${file##*.} = "vcf" ]; then
+                echo "-V \${file}";
+            fi
+        done > gvcf.list
+
+   
+    gatk CombineGVCFs --output combined.g.vcf \
+    --reference ${reference[1]}  --arguments_file gvcf.list \
    
     """
 }
-
- //GVCFLIST=\$(for f in ${gvcf}; do printf " --variant \$f"; done)
- //GVCFLIST=\$(for f in ${gvcf};do if [[ \$f =~ \.\*\\.g.vcf$ ]]; then printf \" --variant \$f\" fi done)
-//echo \$GVCFLIST > isthisthelist.txt
-
-   // gatk CombineGVCFs --output combined.g.vcf \
-   // --reference ${reference[1]} \$GVCFLIST
