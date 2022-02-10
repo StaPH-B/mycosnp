@@ -58,22 +58,28 @@ process gatk_HC{
     """
 }
 
-//Is this the right way to do this?? Something tells me no it's not lol
-
 process gatk_CB{
     publishDir "/home/ldotrang/C_auris_testing/nfBWAref/gatk_output/gvcf_combined", mode: 'copy'
+    // removed the tuple and name tag and added a chunk of script to make a list of variants 
 
     input:
     file reference from reference_fasta2.collect()
-    file (gvcf) from gvcfs.collect().view()
+    file (gvcf) from gvcfs.collect()
 
     output:
     file("*.g.vcf") into combined_gvcfs
+    file("genotyped.vcf") into genotyped_vcf
+    file("variant_filter.vcf") into filtered_vcf
+    file("selected.vcf") into selected_vcf
+    // file("selected-clean.vcf") into selected_clean_vcf
   
 
     script:
     //vcfs = gvcf.join(' --variant ') this did not end up working 
-    
+    // filter expression is default from MycoSNP
+    // select type to include default is SNP
+    // there is a script step if the type selected is SNP, we are going to assume it is
+    // script not added yet!
     """
     for file in ${gvcf}; do
             if [ \${file##*.} = "vcf" ]; then
@@ -84,6 +90,16 @@ process gatk_CB{
    
     gatk CombineGVCFs --output combined.g.vcf \
     --reference ${reference[1]}  --arguments_file gvcf.list \
-   
+
+    gatk GenotypeGVCFs --output genotyped.vcf --reference ${reference[1]} --variant combined.g.vcf
+
+    gatk VariantFiltration --output variant_filter.vcf --reference ${reference[1]} --filter-expression "QD < 2.0 || FS > 60.0 || MQ < 40.0" \
+    --filter-name "filter" --variant genotyped.vcf
+
+    gatk SelectVariants --output selected.vcf --reference ${reference[1]} \
+    --select-type-to-include "SNP" --variant variant_filter.vcf 
+
+    
     """
 }
+// awk '\$5 !~\/[GATC],\*\/' selected.vcf | awk '\$5 !~\/\*\/' >> selected-clean.vcf
