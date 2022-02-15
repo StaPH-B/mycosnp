@@ -3,7 +3,7 @@
 //Deshellion: Workflow that prepares a reference FASTA file for BWA alignment and 
 //GATK variant calling by masking repeats in the reference and generating the BWA index.
 //Author: Lynn Dotrang
-//eMail: thoai.dotrang@virginia.dgs.gov
+//eMail: thoai.dotrang@dgs.virginia.gov
 
 bam_ch = Channel
     .fromPath("/home/ldotrang/C_auris_testing/mycosnp-demo/mycosnp-gatk-variants/data/bam_index/all_bams/*.bam")
