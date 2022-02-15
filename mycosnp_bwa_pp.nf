@@ -3,7 +3,7 @@
 //Deshellion: Workflow that prepares a reference FASTA file for BWA alignment and 
 //GATK variant calling by masking repeats in the reference and generating the BWA index.
 //Author: Lynn Dotrang
-//eMail: thoai.dotrang@virginia.dgs.gov
+//eMail: thoai.dotrang@dgs.virginia.gov
 
 
 // Before completetion, need to edit for all full paths and all hard coded values (CPU usage options, etc)
